@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Traitement d'image .lena</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" rel="stylesheet">
+  <style>
+    body {
+      background: linear-gradient(to right, #e0f7fa, #ffffff);
+      font-family: 'Segoe UI', sans-serif;
+      overflow-x: hidden;
+    }
+    .container {
+      background: white;
+      padding: 30px;
+      max-width: 1000px;
+      margin: 40px auto;
+      border-radius: 20px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+    }
+    canvas {
+      border: 3px solid #0d6efd;
+      border-radius: 10px;
+      max-width: 100%;
+      transition: all 0.4s ease-in-out;
+    }
+    canvas:hover {
+      transform: scale(1.05);
+    }
+    h1 {
+      font-weight: bold;
+      color: #0d6efd;
+      margin-bottom: 30px;
+    }
+    label, .form-label {
+      font-weight: 500;
+      color: #333;
+    }
+    .btn {
+      transition: all 0.3s ease-in-out;
+    }
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+    }
+    .canvas-container h5 {
+      margin: 15px 0;
+      color: #495057;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="container animate__animated animate__fadeIn">
+    <h1 class="text-center">🖼️ Traitement d'image <span class="text-primary">.lena</span></h1>
+
+    <div class="mb-4">
+      <label for="fileInput" class="form-label">📂 Choisir une image .lena :</label>
+      <input type="file" class="form-control" id="fileInput" accept=".lena">
+    </div>
+
+    <div class="row">
+      <div class="col-md-6">
+        <label for="filter" class="form-label">🎛️ Choisissez un filtre :</label>
+        <select class="form-select" id="filter">
+          <option value="0">Aucun filtre</option>
+          <option value="1">Détection horizontale personnalisée</option>
+          <option value="2">Contours diagonaux personnalisés</option>
+          <option value="3">Moyenneur 3x3</option>
+          <option value="4">Détection diagonale inversée</option>
+          <option value="5">Filtre médian</option>
+          <option value="7">Filtre gaussien</option>
+        </select>
+      </div>
+
+      <div class="col-md-6">
+        <label for="noiseToggle" class="form-label">🎛️ Ajouter du bruit :</label>
+        <select class="form-select" id="noiseToggle">
+          <option value="none">Aucun</option>
+          <option value="6">Bruit poivre et sel</option>
+        </select>
+        <div id="noiseBlock" style="display:none;" class="mt-2">
+          <label for="noisePercent" class="form-label">🎯 Pourcentage de bruit (0.05 = 5%) :</label>
+          <input type="number" class="form-control" id="noisePercent" min="0" max="1" step="0.01" value="0.05">
+        </div>
+      </div>
+    </div>
+
+    <div class="mt-4">
+      <label for="downloadName" class="form-label">💾 Nom du fichier à télécharger :</label>
+      <input type="text" class="form-control" id="downloadName" placeholder="image_filtree.png">
+    </div>
+
+    <div class="d-grid gap-2 d-md-flex justify-content-md-center my-4">
+      <button class="btn btn-primary btn-lg" onclick="applyFilter()">✨ Appliquer le filtre</button>
+      <button class="btn btn-success btn-lg" onclick="downloadFilteredImage()">⬇️ Télécharger</button>
+    </div>
+
+    <div class="row text-center">
+      <div class="col-md-6 canvas-container">
+        <h5>🖼️ Image originale</h5>
+        <canvas id="canvasOriginal" width="256" height="256"></canvas>
+      </div>
+      <div class="col-md-6 canvas-container">
+        <h5>🎨 Image filtrée</h5>
+        <canvas id="canvasFiltered" width="256" height="256"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let imageData = [];
+    let originalData = [];
+    const canvasOriginal = document.getElementById('canvasOriginal');
+    const ctxOriginal = canvasOriginal.getContext('2d');
+    const canvasFiltered = document.getElementById('canvasFiltered');
+    const ctxFiltered = canvasFiltered.getContext('2d');
+
+    document.getElementById('noiseToggle').addEventListener('change', function() {
+      document.getElementById('noiseBlock').style.display = this.value === "6" ? "block" : "none";
+    });
+
+    document.getElementById('fileInput').addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function() {
+        const buffer = new Uint8Array(reader.result);
+        const raw = buffer.slice(256, 256 + 256 * 256);
+        originalData = [];
+        for (let i = 0; i < 256; i++) {
+          originalData[i] = [];
+          for (let j = 0; j < 256; j++) {
+            originalData[i][j] = raw[i * 256 + j];
+          }
+        }
+        imageData = JSON.parse(JSON.stringify(originalData));
+        renderImage(originalData, ctxOriginal);
+      };
+      reader.readAsArrayBuffer(file);
+    });
+
+    function renderImage(data, context) {
+      const img = context.createImageData(256, 256);
+      for (let y = 0; y < 256; y++) {
+        for (let x = 0; x < 256; x++) {
+          const i = (y * 256 + x) * 4;
+          const val = data[y][x];
+          img.data[i] = val;
+          img.data[i + 1] = val;
+          img.data[i + 2] = val;
+          img.data[i + 3] = 255;
+        }
+      }
+      context.putImageData(img, 0, 0);
+    }
+
+    function applyFilter() {
+      const choix = parseInt(document.getElementById('filter').value);
+      const noiseChoice = document.getElementById('noiseToggle').value;
+
+      let im = JSON.parse(JSON.stringify(originalData));
+      let out = JSON.parse(JSON.stringify(im));
+
+      if (choix !== 0) {
+        let kernel, divisor = 1, isSobel = 0;
+
+        switch (choix) {
+          case 1: kernel = [[-1,-1,-1],[0,0,0],[1,1,1]]; break;
+          case 2: kernel = [[-1,0,1],[-1,0,1],[-1,1,1]]; isSobel = 1; break;
+          case 3: kernel = [[1,1,1],[1,1,1],[1,1,1]]; divisor = 9; break;
+          case 4: kernel = [[-1,-1,0],[-1,0,1],[0,1,1]]; isSobel = 1; break;
+          case 5: out = filtreMedian(im); break;
+          case 7: kernel = [[1,2,1],[2,4,2],[1,2,1]]; divisor = 16; break;
+          default: alert("Choix de filtre invalide"); return;
+        }
+
+        if (choix !== 5) {
+          out = convolution(im, kernel, divisor, isSobel);
+        }
+      }
+
+      if (noiseChoice === "6") {
+        const p = parseFloat(document.getElementById('noisePercent').value);
+        out = bruitPoivreEtSel(out, p);
+      }
+
+      renderImage(out, ctxFiltered);
+    }
+
+    function convolution(im, k, d, sobel = 0) {
+      const h = 256, w = 256;
+      const out = Array.from({ length: h }, (_, i) => [...im[i]]);
+      for (let y = 1; y < h - 1; y++) {
+        for (let x = 1; x < w - 1; x++) {
+          let sum = 0;
+          for (let i = -1; i <= 1; i++)
+            for (let j = -1; j <= 1; j++)
+              sum += im[y + i][x + j] * k[i + 1][j + 1];
+          sum = d ? sum / d : sum;
+          if (sobel) sum = Math.abs(sum);
+          out[y][x] = Math.max(0, Math.min(255, Math.round(sum)));
+        }
+      }
+      return out;
+    }
+
+    function filtreMedian(im) {
+      const out = Array.from({ length: 256 }, (_, i) => [...im[i]]);
+      for (let y = 1; y < 255; y++) {
+        for (let x = 1; x < 255; x++) {
+          const voisins = [];
+          for (let i = -1; i <= 1; i++)
+            for (let j = -1; j <= 1; j++)
+              voisins.push(im[y + i][x + j]);
+          voisins.sort((a, b) => a - b);
+          out[y][x] = voisins[4];
+        }
+      }
+      return out;
+    }
+
+    function bruitPoivreEtSel(im, pourcentage) {
+      const out = Array.from({ length: 256 }, (_, i) => [...im[i]]);
+      const total = 256 * 256;
+      const nbBruit = Math.floor(total * pourcentage);
+      for (let i = 0; i < nbBruit; i++) {
+        const y = Math.floor(Math.random() * 256);
+        const x = Math.floor(Math.random() * 256);
+        out[y][x] = Math.random() < 0.5 ? 0 : 255;
+      }
+      return out;
+    }
+
+    function downloadFilteredImage() {
+      const name = document.getElementById('downloadName').value.trim() || 'image_filtree.png';
+      const link = document.createElement('a');
+      link.download = name;
+      link.href = canvasFiltered.toDataURL();
+      link.click();
+    }
+  </script>
+</body>
+</html>
+
