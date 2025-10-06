@@ -99,11 +99,6 @@ traitement-image-lena/
 
 ---
 
-## 📸 Aperçu
-*(Ajoute ici des captures d’écran du rendu web et des exemples d’images filtrées)*
-
----
-
 ## 📄 Licence
 Code publié sous licence **MIT** (libre d'utilisation et de modification)
 
