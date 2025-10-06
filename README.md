@@ -10,7 +10,11 @@ Deux versions sont disponibles :
 ---
 
 ## 🌍 Démo en ligne
-👉 [Voir la version web sur GitHub Pages](https://robinsankiritheepan.github.io/lena-image-processing-c-js/)
+
+👉 <a href="https://robinsankiritheepan.github.io/lena-image-processing-c-js/" target="_blank">
+Voir la version web sur GitHub Pages 🌐
+</a>
+
 
 ---
 
