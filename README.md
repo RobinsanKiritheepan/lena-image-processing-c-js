@@ -9,11 +9,9 @@ Deux versions sont disponibles :
 
 ---
 
-## 🌍 Démo en ligne
+## 🌍 Démo en ligne 👉 
 
-👉 <a href="https://robinsankiritheepan.github.io/lena-image-processing-c-js/" target="_blank">
-Voir la version web sur GitHub Pages 🌐
-</a>
+[Voir la version web sur GitHub Pages](https://robinsankiritheepan.github.io/lena-image-processing-c-js/)
 
 ---
 
