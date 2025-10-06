@@ -2,9 +2,6 @@
 Auteurs :
 		- ROBINSAN Kiritheepan
 		- LENARD DUNSTAN Kishor
-	
-Co-auteur :
-		- ChatGPT
 --------------------------------------------------------*/
 
 #include <stdio.h>
