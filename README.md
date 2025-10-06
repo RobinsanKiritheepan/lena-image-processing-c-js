@@ -15,7 +15,6 @@ Deux versions sont disponibles :
 Voir la version web sur GitHub Pages 🌐
 </a>
 
-
 ---
 
 ## 📂 Structure du dépôt
